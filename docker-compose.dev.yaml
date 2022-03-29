@@ -1,0 +1,17 @@
+version: "3.8"
+services:
+    reverse-proxy: 
+        image: nginx:1.21.6-alpine
+        restart: always
+        volumes:
+            - ./conf.d:/etc/nginx/conf.d
+            - ./var/log/nginx:/var/log/nginx
+            - "/etc/timezone:/etc/timezone:ro"
+            - "/etc/localtime:/etc/localtime:ro" 
+        ports:
+            - 80:80
+            - 443:443
+networks:
+  default:
+    external:
+      name: capstone-dev

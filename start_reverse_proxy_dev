@@ -1,0 +1,56 @@
+#!/bin/bash
+
+echo "
+server {
+    listen 443;
+    listen [::]:443;
+    server_name ${SERVER_IP};
+    ssl_certificate         /ssl/cert.pub;
+    ssl_certificate_key     /ssl/cert.private;
+    return 301 https://${DOMAIN_DEV}$request_uri;
+}
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name ${DOMAIN_DEV} ${SERVER_IP};
+    return 301 https://$host$request_uri;
+}
+
+server{
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name ${DOMAIN_DEV};
+
+    ssl_certificate         /ssl/cert.pub;
+    ssl_certificate_key     /ssl/cert.private;
+    ssl_session_timeout 1d;
+    ssl_session_cache shared:MozSSL:10m;  # about 40000 sessions
+    ssl_session_tickets off;
+
+    # curl https://ssl-config.mozilla.org/ffdhe2048.txt > /path/to/dhparam
+    ssl_dhparam /dhparam;
+
+    # intermediate configuration
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers off;
+
+    # OCSP stapling
+    ssl_stapling on;
+    ssl_stapling_verify on;
+
+    # replace with the IP address of your resolver
+    resolver 127.0.0.1;
+
+    location / {
+        proxy_pass ${INTERNAL_FRONTEND_DEV};
+    }
+
+    location /api {
+        proxy_pass ${INTERNAL_BACKEND_DEV};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP  $remote_addr;
+        proxy_set_header X-Forwarded-For $remote_addr;
+    }
+}
+" > ./conf.d/reverse-proxy-dev.conf
