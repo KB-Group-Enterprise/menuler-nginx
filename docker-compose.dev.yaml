@@ -4,6 +4,8 @@ services:
         image: nginx:1.21.6-alpine
         restart: always
         volumes:
+            - ./ssl:/ssl
+            - ./dhparam:/dhparam
             - ./conf.d:/etc/nginx/conf.d
             - ./var/log/nginx:/var/log/nginx
             - "/etc/timezone:/etc/timezone:ro"
